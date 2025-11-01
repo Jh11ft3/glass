@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>GlassTube - 液态玻璃短视频</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#0071e3',
+            secondary: '#ec4899',
+            dark: 'rgba(17, 24, 39, 0.7)',
+          },
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .glass {
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+      }
+      .glass-dark {
+        background: rgba(17, 24, 39, 0.6);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .content-auto {
+        content-visibility: auto;
+      }
+      .video-thumb {
+        transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+      }
+      .video-thumb:hover {
+        transform: scale(1.03);
+      }
+      .slide-up {
+        animation: slideUp 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+      }
+      .slide-down {
+        animation: slideDown 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+      }
+      .fade-in {
+        animation: fadeIn 0.5s ease forwards;
+      }
+      .scale-in {
+        animation: scaleIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+      }
+      .pulse-slow {
+        animation: pulse 3s infinite;
+      }
+      .pulse-fast {
+        animation: pulse 1.5s infinite;
+      }
+      .hover-scale {
+        transition: transform 0.2s ease;
+      }
+      .hover-scale:hover {
+        transform: scale(1.1);
+      }
+      .hover-scale:active {
+        transform: scale(0.95);
+      }
+      .progress-bar {
+        height: 3px;
+        background: rgba(255, 255, 255, 0.3);
+        position: relative;
+        overflow: hidden;
+      }
+      .progress-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 0%;
+        background: white;
+        transition: width 0.1s linear;
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      @keyframes slideUp {
+        from { transform: translateY(100%); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      @keyframes slideDown {
+        from { transform: translateY(-100%); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes scaleIn {
+        from { transform: scale(0.9); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+      }
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+      }
+      .gradient-text {
+        background: linear-gradient(90deg, #0071e3, #ec4899);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .text-shadow {
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+      .backdrop-blur {
+        backdrop-filter: blur(10px);
+      }
+    }
+  </style>
+</head>
+<body class="bg-black text-white overflow-x-hidden font-sans touch-manipulation">
+  <!-- 背景装饰 -->
+  <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+    <div class="absolute top-[-200px] left-[-100px] w-[400px] h-[400px] rounded-full bg-primary/20 blur-[120px] pulse-slow"></div>
+    <div class="absolute bottom-[-150px] right-[-50px] w-[300px] h-[300px] rounded-full bg-secondary/20 blur-[100px] pulse-slow" style="animation-delay: 1s;"></div>
+  </div>
+
+  <!-- 登录/注册界面 -->
+  <div id="authScreen" class="fixed inset-0 z-50 flex items-center justify-center p-6">
+    <div class="max-w-4xl w-full flex flex-col lg:flex-row gap-8 items-center">
+      <!-- 左侧品牌展示 -->
+      <div class="lg:w-1/2 space-y-6 slide-up">
+        <div class="flex items-center space-x-3">
+          <div class="w-12 h-12 rounded-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center pulse-slow">
+            <i class="fa fa-play text-white text-xl"></i>
+          </div>
+          <h1 class="text-3xl font-bold gradient-text">Glass<span class="text-white">Tube</span></h1>
+        </div>
+        
+        <h2 class="text-[clamp(1.8rem,5vw,3rem)] font-bold leading-tight text-shadow">
+          探索精彩<br>短视频世界
+        </h2>
+        
+        <p class="text-gray-300 text-lg">
+          沉浸在液态玻璃般流畅的短视频体验中，分享创意，发现灵感
+        </p>
+        
+        <div class="grid grid-cols-3 gap-3 mt-8">
+          <div class="aspect-square rounded-lg overflow-hidden video-thumb">
+            <img src="https://picsum.photos/id/1015/300/300" alt="视频缩略图" class="w-full h-full object-cover">
+          </div>
+          <div class="aspect-square rounded-lg overflow-hidden video-thumb" style="animation-delay: 0.2s">
+            <img src="https://picsum.photos/id/1016/300/300" alt="视频缩略图" class="w-full h-full object-cover">
+          </div>
+          <div class="aspect-square rounded-lg overflow-hidden video-thumb" style="animation-delay: 0.4s">
+            <img src="https://picsum.photos/id/1018/300/300" alt="视频缩略图" class="w-full h-full object-cover">
+          </div>
+        </div>
+      </div>
+      
+      <!-- 右侧登录注册表单 -->
+      <div class="lg:w-1/2 w-full max-w-md glass rounded-2xl p-8 scale-in">
+        <!-- 登录表单 -->
+        <div id="loginForm" class="space-y-6">
+          <div class="text-center space-y-2">
+            <h3 class="text-2xl font-bold">欢迎回来</h3>
+            <p class="text-gray-300">登录账号继续探索</p>
+          </div>
+          
+          <div class="space-y-5">
+            <div>
+              <label for="loginUsername" class="block text-sm font-medium text-gray-300 mb-1">用户名</label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fa fa-user text-gray-400"></i>
+                </div>
+                <input type="text" id="loginUsername" class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all duration-300" placeholder="输入用户名">
+              </div>
+            </div>
+            
+            <div>
+              <label for="loginPassword" class="block text-sm font-medium text-gray-300 mb-1">密码</label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fa fa-lock text-gray-400"></i>
+                </div>
+                <input type="password" id="loginPassword" class="w-full pl-10 pr-10 py-3 rounded-xl bg-slate-800/50 border border-slate-700 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all duration-300" placeholder="输入密码">
+                <button id="toggleLoginPwd" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white transition-colors duration-300 hover-scale">
+                  <i class="fa fa-eye-slash"></i>
+                </button>
+              </div>
+            </div>
+            
+            <button id="loginBtn" class="w-full bg-gradient-to-r from-primary to-secondary py-3 rounded-xl font-medium transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 hover-scale">
+              <span>登录</span>
+              <i class="fa fa-arrow-right ml-2"></i>
+            </button>
+          </div>
+          
+          <div class="relative my-4">
+            <div class="absolute inset-0 flex items-center">
+              <div class="w-full border-t border-slate-700"></div>
+            </div>
+            <div class="relative flex justify-center text-sm">
+              <span class="px-2 bg-transparent text-gray-400">或者</span>
+            </div>
+          </div>
+          
+          <button id="switchToReg" class="w-full py-3 rounded-xl font-medium border border-slate-700 transition-all duration-300 hover:bg-white/5 hover-scale">
+            没有账号? 注册
+          </button>
+        </div>
+        
+        <!-- 注册表单 -->
+        <div id="registerForm" class="space-y-6 hidden">
+          <div class="text-center space-y-2">
+            <h3 class="text-2xl font-bold">创建账号</h3>
+            <p class="text-gray-300">加入GlassTube短视频社区</p>
+          </div>
+          
+          <div class="space-y-5">
+            <div>
+              <label for="regUsername" class="block text-sm font-medium text-gray-300 mb-1">用户名</label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fa fa-user text-gray-400"></i>
+                </div>
+                <input type="text" id="regUsername" class="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all duration-300" placeholder="设置用户名">
+                <div id="usernameError" class="hidden absolute -bottom-5 left-0 text-sm text-red-400">
+                  <i class="fa fa-exclamation-circle mr-1"></i>
+                  <span>用户名已存在</span>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <label for="regPassword" class="block text-sm font-medium text-gray-300 mb-1">密码</label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fa fa-lock text-gray-400"></i>
+                </div>
+                <input type="password" id="regPassword" class="w-full pl-10 pr-10 py-3 rounded-xl bg-slate-800/50 border border-slate-700 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all duration-300" placeholder="至少8位字符">
+                <button id="toggleRegPwd" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white transition-colors duration-300 hover-scale">
+                  <i class="fa fa-eye-slash"></i>
+                </button>
+              </div>
+            </div>
+            
+            <button id="registerBtn" class="w-full bg-gradient-to-r from-primary to-secondary py-3 rounded-xl font-medium transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 hover-scale">
+              <span>注册</span>
+              <i class="fa fa-user-plus ml-2"></i>
+            </button>
+          </div>
+          
+          <div class="relative my-4">
+            <div class="absolute inset-0 flex items-center">
+              <div class="w-full border-t border-slate-700"></div>
+            </div>
+            <div class="relative flex justify-center text-sm">
+              <span class="px-2 bg-transparent text-gray-400">或者</span>
+            </div>
+          </div>
+          
+          <button id="switchToLogin" class="w-full py-3 rounded-xl font-medium border border-slate-700 transition-all duration-300 hover:bg-white/5 hover-scale">
+            已有账号? 登录
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 主视频浏览界面 -->
+  <div id="videoScreen" class="fixed inset-0 z-40 hidden">
+    <!-- 视频容器 - 用于滑动切换 -->
+    <div id="videoContainer" class="h-full">
+      <!-- 视频1 -->
+      <div class="video-slide h-full relative">
+        <video class="absolute inset-0 w-full h-full object-cover" playsinline loop>
+          <source src="https://assets.mixkit.co/videos/preview/mixkit-woman-dancing-at-a-disco-4811-large.mp4" type="video/mp4">
+        </video>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+        
+        <!-- 顶部信息 -->
+        <div class="absolute top-0 left-0 right-0 p-6 z-10 flex justify-between items-center">
+          <h1 class="text-xl font-bold gradient-text">Glass<span class="text-white">Tube</span></h1>
+          <div class="flex space-x-3">
+            <button class="w-10 h-10 rounded-full glass flex items-center justify-center hover:bg-white/10 transition-all duration-300 hover-scale">
+              <i class="fa fa-search"></i>
+            </button>
+            <button class="w-10 h-10 rounded-full glass flex items-center justify-center hover:bg-white/10 transition-all duration-300 hover-scale">
+              <i class="fa fa-bell"></i>
+            </button>
+          </div>
+        </div>
+        
+        <!-- 底部信息 -->
+        <div class="absolute bottom-0 left-0 right-0 p-6 z-10">
+          <div class="flex justify-between items-end">
+            <div class="max-w-[80%]">
+              <div class="flex items-center space-x-3 mb-3">
+                <img src="https://picsum.photos/id/64/100/100" alt="用户头像" class="w-12 h-12 rounded-full border-2 border-white">
+                <div>
+                  <h3 class="font-bold text-lg">舞动人生</h3>
+                  <p class="text-sm text-gray-300">@dancequeen · 3.2k 粉丝</p>
+                </div>
+                <button class="ml-4 px-4 py-2 bg-primary rounded-full text-sm font-medium hover:bg-primary/90 transition-all duration-300 hover-scale">
+                  关注
+                </button>
+              </div>
+              
+              <h2 class="font-semibold text-lg mb-2">周末迪斯科之夜，释放所有压力！#舞蹈 #音乐</h2>
+              
+              <div class="flex items-center space-x-6 mt-4">
+                <button class="flex flex-col items-center hover-scale">
+                  <div class="w-10 h-10 rounded-full glass flex items-center justify-center mb-1">
+                    <i class="fa fa-heart-o text-xl"></i>
+                  </div>
+                  <span class="text-sm">24.5k</span>
+                </button>
+                
+                <button class="flex flex-col items-center hover-scale">
+                  <div class="w-10 h-10 rounded-full glass flex items-center justify-center mb-1">
+                    <i class="fa fa-comment-o text-xl"></i>
+                  </div>
+                  <span class="text-sm">836</span>
+                </button>
+                
+                <button class="flex flex-col items-center hover-scale">
+                  <div class="w-10 h-10 rounded-full glass flex items-center justify-center mb-1">
+                    <i class="fa fa-share text-xl"></i>
+                  </div>
+                  <span class="text-sm">分享</span>
+                </button>
+                
+                <button class="flex flex-col items-center hover-scale">
+                  <div class="w-10 h-10 rounded-full glass flex items-center justify-center mb-1">
+                    <i class="fa fa-bookmark-o text-xl"></i>
+                  </div>
+                  <span class="text-sm">收藏</span>
+                </button>
+              </div>
+            </div>
+            
+            <!-- 右侧功能按钮 -->
+            <div class="flex flex-col space-x-2">
+              <button class="w-12 h-12 rounded-full glass flex items-center justify-center mb-2 hover:bg-white/10 transition-all duration-300 hover-scale">
+                <i class="fa fa-music text-xl"></i>
+              </button>
+              <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-white">
+                <img src="https://picsum.photos/id/1019/100/100" alt="音乐封面" class="w-full h-full object-cover">
+              </div>
+            </div>
+          </div>
+          
+          <!-- 进度条 -->
+          <div class="progress-bar mt-6" data-duration="25"></div>
+        </div>
+      </div>
+      
+      <!-- 视频2 -->
+      <div class="video-slide h-full relative">
+        <video class="absolute inset-0 w-full h-full object-cover" playsinline loop>
+          <source src="https://assets.mixkit.co/videos/preview/mixkit-tree-with-yellow-flowers-1173-large.mp4" type="video/mp4">
+        </video>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+        
+        <!-- 顶部信息 -->
+        <div class="absolute top-0 left-0 right-0 p-6 z-10 flex justify-between items-center">
+          <h1 class="text-xl font-bold gradient-text">Glass<span class="text-white">Tube</span></h1>
+          <div class="flex space-x-3">
+            <button class="w-10 h-10 rounded-full glass flex items-center justify-center hover:bg-white/10 transition-all duration-300 hover-scale">
+              <i class="fa fa-search"></i>
+            </button>
+            <button class="w-10 h-10 rounded-full glass flex items-center justify-center hover:bg-white/10 transition-all duration-300 hover-scale">
+              <i class="fa fa-bell"></i>
+            </button>
+          </div>
+        </div>
+        
+        <!-- 底部信息 -->
+        <div class="absolute bottom-0 left-0 right-0 p-6 z-10">
+          <div class="flex justify-between items-end">
+            <div class="max-w-[80%]">
+              <div class="flex items-center space-x-3 mb-3">
+                <img src="https://picsum.photos/id/1005/100/100" alt="用户头像" class="w-12 h-12 rounded-full border-2 border-white">
+                <div>
+                  <h3 class="font-bold text-lg">自然之美</h3>
+                  <p class="text-sm text-gray-300">@naturelover · 12.8k 粉丝</p>
+                </div>
+                <button class="ml-4 px-4 py-2 bg-gray-600 rounded-full text-sm font-medium hover:bg-gray-500 transition-all duration-300 hover-scale">
+                  已关注
+                </button>
+              </div>
+              
+              <h2 class="font-semibold text-lg mb-2">春日限定，黄花满树 #自然 #风景 #春天</h2>
+              
+              <div class="flex items-center space-x-6 mt-4">
+                <button class="flex flex-col items-center hover-scale">
+                  <div class="w-10 h-10 rounded-full glass flex items-center justify-center mb-1">
+                    <i class="fa fa-heart text-xl text-red-500"></i>
+                  </div>
+                  <span class="text-sm">128.3k</span>
+                </button>
+                
+                <button class="flex flex-col items-center hover-scale">
+                  <div class="w-10 h-10 rounded-full glass flex items-center justify-center mb-1">
+                    <i class="fa fa-comment-o text-xl"></i>
+                  </div>
+                  <span class="text-sm">3.2k</span>
+                </button>
+                
+                <button class="flex flex-col items-center hover-scale">
+                  <div class="w-10 h-10 rounded-full glass flex items-center justify-center mb-1">
+                    <i class="fa fa-share text-xl"></i>
+                  </div>
+                  <span class="text-sm">分享</span>
+                </button>
+                
+                <button class="flex flex-col items-center hover-scale">
+                  <div class="w-10 h-10 rounded-full glass flex items-center justify-center mb-1">
+                    <i class="fa fa-bookmark text-xl"></i>
+                  </div>
+                  <span class="text-sm">收藏</span>
+                </button>
+              </div>
+            </div>
+            
+            <!-- 右侧功能按钮 -->
+            <div class="flex flex-col space-x-2">
+              <button class="w-12 h-12 rounded-full glass flex items-center justify-center mb-2 hover:bg-white/10 transition-all duration-300 hover-scale">
+                <i class="fa fa-music text-xl"></i>
+              </button>
+              <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-white">
+                <img src="https://picsum.photos/id/1039/100/100" alt="音乐封面" class="w-full h-full object-cover">
+              </div>
+            </div>
+          </div>
+          
+          <!-- 进度条 -->
+          <div class="progress-bar mt-6" data-duration="38"></div>
+        </div>
+      </div>
+      
+      <!-- 视频3 -->
+      <div class="video-slide h-full relative">
+        <video class="absolute inset-0 w-full h-full object-cover" playsinline loop>
+          <source src="https://assets.mixkit.co/videos/preview/mixkit-cat-walking-on-a-window-sill-1134-large.mp4" type="video/mp4">
+        </video>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+        
+        <!-- 底部信息 -->
+        <div class="absolute bottom-0 left-0 right-0 p-6 z-10">
+          <div class="flex justify-between items-end">
+            <div class="max-w-[80%]">
+              <div class="flex items-center space-x-3 mb-3">
+                <img src="https://picsum.photos/id/1074/100/100" alt="用户头像" class="w-12 h-12 rounded-full border-2 border-white">
+                <div>
+                  <h3 class="font-bold text-lg">喵星人日常</h3>
+                  <p class="text-sm text-gray-300">@catlife · 8.5k 粉丝</p>
+                </div>
+                <button class="ml-4 px-4 py-2 bg-primary rounded-full text-sm font-medium hover:bg-primary/90 transition-all duration-300 hover-scale">
+                  关注
+                </button>
+              </div>
+              
+              <h2 class="font-semibold text-lg mb-2">窗外的世界总是那么有趣 #猫咪 #宠物 #萌宠</h2>
+              
+              <div class="flex items-center space-x-6 mt-4">
+                <button class="flex flex-col items-center hover-scale">
+                  <div class="w-10 h-10 rounded-full glass flex items-center justify-center mb-1">
+                    <i class="fa fa-heart-o text-xl"></i>
+                  </div>
+                  <span class="text-sm">56.2k</span>
+                </button>
+                
+                <button class="flex flex-col items-center hover-scale">
+                  <div class="w-10 h-10 rounded-full glass flex items-center justify-center mb-1">
+                    <i class="fa fa-comment-o text-xl"></i>
+                  </div>
+                  <span class="text-sm">1.8k</span>
+                </button>
+                
+                <button class="flex flex-col items-center hover-scale">
+                  <div class="w-10 h-10 rounded-full glass flex items-center justify-center mb-1">
+                    <i class="fa fa-share text-xl"></i>
+                  </div>
+                  <span class="text-sm">分享</span>
+                </button>
+                
+                <button class="flex flex-col items-center hover-scale">
+                  <div class="w-10 h-10 rounded-full glass flex items-center justify-center mb-1">
+                    <i class="fa fa-bookmark-o text-xl"></i>
+                  </div>
+                  <span class="text-sm">收藏</span>
+                </button>
+              </div>
+            </div>
+            
+            <!-- 右侧功能按钮 -->
+            <div class="flex flex-col space-x-2">
+              <button class="w-12 h-12 rounded-full glass flex items-center justify-center mb-2 hover:bg-white/10 transition-all duration-300 hover-scale">
+                <i class="fa fa-music text-xl"></i>
+              </button>
+              <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-white">
+                <img src="https://picsum.photos/id/1062/100/100" alt="音乐封面" class="w-full h-full object-cover">
+              </div>
+            </div>
+          </div>
+          
+          <!-- 进度条 -->
+          <div class="progress-bar mt-6" data-duration="22"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 底部导航 -->
+    <div class="fixed bottom-0 left-0 right-0 h-16 glass-dark flex items-center justify-around z-20">
+      <button class="flex flex-col items-center justify-center text-primary transition-all duration-300 hover-scale">
+        <i class="fa fa-home text-xl"></i>
+        <span class="text-xs mt-1">首页</span>
+      </button>
+      <button class="flex flex-col items-center justify-center text-gray-400 hover:text-primary transition-all duration-300 hover-scale">
+        <i class="fa fa-compass text-xl"></i>
+        <span class="text-xs mt-1">发现</span>
+      </button>
+      <button class="w-14 h-14 rounded-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center -mt-10 shadow-lg shadow-primary/20 transition-all duration-300 hover-scale pulse-slow">
+        <i class="fa fa-plus text-xl"></i>
+      </button>
+      <button class="flex flex-col items-center justify-center text-gray-400 hover:text-primary transition-all duration-300 hover-scale">
+        <i class="fa fa-bell text-xl"></i>
+        <span class="text-xs mt-1">通知</span>
+      </button>
+      <button class="flex flex-col items-center justify-center text-gray-400 hover:text-primary transition-all duration-300 hover-scale" id="profileBtn">
+        <i class="fa fa-user text-xl"></i>
+        <span class="text-xs mt-1">我的</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 个人中心界面 -->
+  <div id="profileScreen" class="fixed inset-0 z-50 glass-dark transform translate-x-full transition-transform duration-400 ease-in-out overflow-y-auto">
+    <div class="p-6">
+      <!-- 顶部导航 -->
+      <div class="flex justify-between items-center mb-8">
+        <button id="backToVideos" class="w-10 h-10 rounded-full glass flex items-center justify-center hover:bg-white/10 transition-all duration-300 hover-scale">
+          <i class="fa fa-arrow-left"></i>
+        </button>
+        <h2 class="text-xl font-bold">个人中心</h2>
+        <button class="w-10 h-10 rounded-full glass flex items-center justify-center hover:bg-white/10 transition-all duration-300 hover-scale">
+          <i class="fa fa-cog"></i>
+        </button>
+      </div>
+      
+      <!-- 个人信息 -->
+      <div class="flex flex-col items-center mb-10">
+        <div class="relative mb-4">
+          <img src="https://picsum.photos/id/64/200/200" alt="个人头像" class="w-24 h-24 rounded-full border-4 border-primary">
+          <button class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white transition-all duration-300 hover:bg-primary/90 hover-scale">
+            <i class="fa fa-camera text-sm"></i>
+          </button>
+        </div>
+        <h3 class="font-bold text-2xl" id="profileUsername">用户名</h3>
+        <p class="text-gray-400 mt-1">分享生活中的精彩瞬间</p>
+        
+        <div class="flex justify-center space-x-8 mt-6">
+          <div class="text-center">
+            <p class="font-bold text-xl">24</p>
+            <p class="text-sm text-gray-400">作品</p>
+          </div>
+          <div class="text-center">
+            <p class="font-bold text-xl">1.2k</p>
+            <p class="text-sm text-gray-400">粉丝</p>
+          </div>
+          <div class="text-center">
+            <p class="font-bold text-xl">356</p>
+            <p class="text-sm text-gray-400">关注</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 发布作品按钮 -->
+      <button class="w-full py-3 bg-gradient-to-r from-primary to-secondary rounded-xl font-medium mb-8 transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 hover-scale">
+        <i class="fa fa-plus mr-2"></i> 发布新作品
+      </button>
+      
+      <!-- 作品网格 -->
+      <h4 class="font-semibold text-lg mb-4">我的作品</h4>
+      <div class="grid grid-cols-3 gap-2">
+        <div class="aspect-square rounded-lg overflow-hidden relative group video-thumb">
+          <img src="https://picsum.photos/id/1015/300/300" alt="作品缩略图" class="w-full h-full object-cover">
+          <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+            <i class="fa fa-play-circle text-white text-3xl"></i>
+          </div>
+          <div class="absolute bottom-2 right-2 flex items-center text-white text-sm">
+            <i class="fa fa-heart mr-1"></i>
+            <span>1.2k</span>
+          </div>
+        </div>
+        <div class="aspect-square rounded-lg overflow-hidden relative group video-thumb">
+          <img src="https://picsum.photos/id/1016/300/300" alt="作品缩略图" class="w-full h-full object-cover">
+          <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+            <i class="fa fa-play-circle text-white text-3xl"></i>
+          </div>
+          <div class="absolute bottom-2 right-2 flex items-center text-white text-sm">
+            <i class="fa fa-heart mr-1"></i>
+            <span>3.5k</span>
+          </div>
+        </div>
+        <div class="aspect-square rounded-lg overflow-hidden relative group video-thumb">
+          <img src="https://picsum.photos/id/1018/300/300" alt="作品缩略图" class="w-full h-full object-cover">
+          <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+            <i class="fa fa-play-circle text-white text-3xl"></i>
+          </div>
+          <div class="absolute bottom-2 right-2 flex items-center text-white text-sm">
+            <i class="fa fa-heart mr-1"></i>
+            <span>867</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 退出登录按钮 -->
+      <button id="logoutBtn" class="w-full py-3 mt-10 rounded-xl font-medium border border-red-500 text-red-400 transition-all duration-300 hover:bg-red-500/10 hover-scale">
+        <i class="fa fa-sign-out mr-2"></i> 退出登录
+      </button>
+      
+      <!-- 底部留白 -->
+      <div class="h-24"></div>
+    </div>
+  </div>
+
+  <!-- 发布视频界面 -->
+  <div id="uploadScreen" class="fixed inset-0 z-50 glass-dark hidden fade-in">
+    <div class="p-6 h-full flex flex-col">
+      <!-- 顶部导航 -->
+      <div class="flex justify-between items-center mb-6">
+        <button id="cancelUpload" class="px-4 py-2 rounded-lg glass hover:bg-white/10 transition-all duration-300 hover-scale">
+          取消
+        </button>
+        <h2 class="text-xl font-bold">发布视频</h2>
+        <button id="confirmUpload" class="px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 transition-all duration-300 hover-scale">
+          发布
+        </button>
+      </div>
+      
+      <!-- 视频预览 -->
+      <div class="flex-1 flex flex-col items-center justify-center mb-6">
+        <div class="w-full max-w-md aspect-video rounded-xl overflow-hidden glass flex items-center justify-center relative group">
+          <img src="https://picsum.photos/id/1035/800/450" alt="视频预览" class="w-full h-full object-cover">
+          <div class="absolute inset-0 flex items-center justify-center">
+            <div class="w-16 h-16 rounded-full bg-primary/80 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+              <i class="fa fa-play text-white text-2xl ml-1"></i>
+            </div>
+          </div>
+          <div class="absolute top-3 right-3">
+            <button class="w-8 h-8 rounded-full bg-black/50 flex items-center justify-center hover:bg-black/70 transition-all duration-300 hover-scale">
+              <i class="fa fa-times text-white"></i>
+            </button>
+          </div>
+        </div>
+        
+        <button class="mt-6 w-full max-w-md py-3 rounded-xl border-2 border-dashed border-gray-500 hover:border-primary transition-all duration-300 hover-scale">
+          <i class="fa fa-plus mr-2"></i> 替换视频
+        </button>
+      </div>
+      
+      <!-- 视频信息输入 -->
+      <div class="space-y-6">
+        <div>
+          <label for="videoTitle" class="block text-sm font-medium text-gray-300 mb-1">视频标题</label>
+          <input type="text" id="videoTitle" class="w-full px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all duration-300" placeholder="添加吸引人的标题...">
+        </div>
+        
+        <div>
+          <label for="videoDesc" class="block text-sm font-medium text-gray-300 mb-1">视频描述</label>
+          <textarea id="videoDesc" rows="3" class="w-full px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all duration-300 resize-none" placeholder="描述你的视频内容..."></textarea>
+        </div>
+        
+        <div>
+          <label for="videoTags" class="block text-sm font-medium text-gray-300 mb-1">标签</label>
+          <input type="text" id="videoTags" class="w-full px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all duration-300" placeholder="添加标签，用空格分隔（例如：#风景 #旅行）">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 通知提示 -->
+  <div id="notification" class="fixed top-6 right-6 glass rounded-xl p-4 max-w-xs transform translate-x-full opacity-0 transition-all duration-400 z-50 flex items-start space-x-3">
+    <div id="notifyIcon" class="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 mt-0.5 flex-shrink-0">
+      <i class="fa fa-check"></i>
+    </div>
+    <div>
+      <h4 id="notifyTitle" class="font-medium">操作成功</h4>
+      <p id="notifyMessage" class="text-sm text-gray-300 mt-1">登录成功</p>
+    </div>
+    <button id="closeNotify" class="text-gray-400 hover:text-white transition-colors duration-300 hover-scale">
+      <i class="fa fa-times"></i>
+    </button>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // DOM元素获取
+      const authScreen = document.getElementById('authScreen');
+      const videoScreen = document.getElementById('videoScreen');
+      const profileScreen = document.getElementById('profileScreen');
+      const uploadScreen = document.getElementById('uploadScreen');
+      const videoContainer = document.getElementById('videoContainer');
+      const videoSlides = document.querySelectorAll('.video-slide');
+      const progressBars = document.querySelectorAll('.progress-bar');
+      
+      // 登录注册相关
+      const loginForm = document.getElementById('loginForm');
+      const registerForm = document.getElementById('registerForm');
+      const switchToReg = document.getElementById('switchToReg');
+      const switchToLogin = document.getElementById('switchToLogin');
+      const toggleLoginPwd = document.getElementById('toggleLoginPwd');
+      const toggleRegPwd = document.getElementById('toggleRegPwd');
+      const loginPassword = document.getElementById('loginPassword');
+      const regPassword = document.getElementById('regPassword');
+      const loginBtn = document.getElementById('loginBtn');
+      const registerBtn = document.getElementById('registerBtn');
+      const usernameError = document.getElementById('usernameError');
+      const profileUsername = document.getElementById('profileUsername');
+      
+      // 导航相关
+      const profileBtn = document.getElementById('profileBtn');
+      const backToVideos = document.getElementById('backToVideos');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const cancelUpload = document.getElementById('cancelUpload');
+      const confirmUpload = document.getElementById('confirmUpload');
+      
+      // 通知相关
+      const notification = document.getElementById('notification');
+      const notifyTitle = document.getElementById('notifyTitle');
+      const notifyMessage = document.getElementById('notifyMessage');
+      const notifyIcon = document.getElementById('notifyIcon');
+      const closeNotify = document.getElementById('closeNotify');
+      
+      // 视频滑动相关变量
+      let currentSlide = 0;
+      let startY = 0;
+      let endY = 0;
+      let isDragging = false;
+      let videoPlaying = Array(videoSlides.length).fill(true);
+      
+      // 本地存储用户数据
+      let users = JSON.parse(localStorage.getItem('glassTubeUsers')) || [];
+      let currentUser = JSON.parse(localStorage.getItem('glassTubeCurrentUser')) || null;
+      
+      // 表单切换
+      switchToReg.addEventListener('click', function() {
+        loginForm.classList.add('hidden');
+        registerForm.classList.remove('hidden');
+        registerForm.classList.add('fade-in');
+      });
+      
+      switchToLogin.addEventListener('click', function() {
+        registerForm.classList.add('hidden');
+        loginForm.classList.remove('hidden');
+        loginForm.classList.add('fade-in');
+        usernameError.classList.add('hidden');
+      });
+      
+      // 密码显示切换
+      toggleLoginPwd.addEventListener('click', function() {
+        const type = loginPassword.getAttribute('type') === 'password' ? 'text' : 'password';
+        loginPassword.setAttribute('type', type);
+        toggleLoginPwd.innerHTML = type === 'password' ? '<i class="fa fa-eye-slash"></i>' : '<i class="fa fa-eye"></i>';
+      });
+      
+      toggleRegPwd.addEventListener('click', function() {
+        const type = regPassword.getAttribute('type') === 'password' ? 'text' : 'password';
+        regPassword.setAttribute('type', type);
+        toggleRegPwd.innerHTML = type === 'password' ? '<i class="fa fa-eye-slash"></i>' : '<i class="fa fa-eye"></i>';
+      });
+      
+      // 登录功能
+      loginBtn.addEventListener('click', function() {
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value.trim();
+        
+        if (!username || !password) {
+          showNotification('错误', '请输入用户名和密码', 'error');
+          return;
+        }
+        
+        // 查找用户
+        const user = users.find(u => u.username === username && u.password === password);
+        
+        if (user) {
+          loginBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
+          setTimeout(function() {
+            currentUser = user;
+            localStorage.setItem('glassTubeCurrentUser', JSON.stringify(currentUser));
+            authScreen.classList.add('hidden');
+            videoScreen.classList.remove('hidden');
+            profileUsername.textContent = username;
+            showNotification('登录成功', `欢迎回来，${username}`, 'success');
+            
+            // 开始播放第一个视频
+            playVideo(0);
+            startProgress(0);
+            
+            loginBtn.innerHTML = '<span>登录</span><i class="fa fa-arrow-right ml-2"></i>';
+          }, 1000);
+        } else {
+          showNotification('错误', '用户名或密码不正确', 'error');
+        }
+      });
+      
+      // 注册功能
+      registerBtn.addEventListener('click', function() {
+        const username = document.getElementById('regUsername').value.trim();
+        const password = document.getElementById('regPassword').value.trim();
+        
+        if (!username || !password) {
+          showNotification('错误', '请填写用户名和密码', 'error');
+          return;
+        }
+        
+        if (password.length < 8) {
+          showNotification('错误', '密码长度至少8位', 'error');
+          return;
+        }
+        
+        // 检查用户名是否已存在
+        if (users.some(u => u.username === username)) {
+          usernameError.classList.remove('hidden');
+          return;
+        }
+        
+        usernameError.classList.add('hidden');
+        
+        // 创建新用户
+        registerBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
+        setTimeout(function() {
+          const newUser = {
+            username: username,
+            password: password,
+            avatar: `https://picsum.photos/id/${Math.floor(Math.random() * 100)}/100/100`
+          };
+          
+          users.push(newUser);
+          localStorage.setItem('glassTubeUsers', JSON.stringify(users));
+          
+          registerBtn.innerHTML = '<span>注册</span><i class="fa fa-user-plus ml-2"></i>';
+          registerForm.classList.add('hidden');
+          loginForm.classList.remove('hidden');
+          document.getElementById('loginUsername').value = username;
+          showNotification('注册成功', '请使用账号密码登录', 'success');
+        }, 1000);
+      });
+      
+      // 视频播放控制
+      function playVideo(index) {
+        const video = videoSlides[index].querySelector('video');
+        if (video) {
+          video.play();
+          videoPlaying[index] = true;
+        }
+      }
+      
+      function pauseVideo(index) {
+        const video = videoSlides[index].querySelector('video');
+        if (video) {
+          video.pause();
+          videoPlaying[index] = false;
+        }
+      }
+      
+      // 进度条动画
+      function startProgress(index) {
+        const progressBar = progressBars[index];
+        const duration = parseInt(progressBar.dataset.duration) || 30;
+        let progress = 0;
+        
+        const interval = setInterval(() => {
+          // 如果不是当前显示的视频或已暂停，则停止进度条
+          if (currentSlide !== index || !videoPlaying[index]) {
+            clearInterval(interval);
+            return;
+          }
+          
+          progress += (100 / duration) / 60; // 每秒增加的进度
+          progressBar.style.setProperty('--progress', progress + '%');
+          progressBar.querySelector('::after').style.width = progress + '%';
+          
+          if (progress >= 100) {
+            clearInterval(interval);
+            // 进度完成后自动切换到下一个视频
+            setTimeout(() => {
+              goToSlide(currentSlide + 1);
+            }, 1000);
+          }
+        }, 16); // 约60fps
+      }
+      
+      // 视频滑动控制
+      function goToSlide(index) {
+        // 确保索引在有效范围内
+        if (index < 0) index = 0;
+        if (index >= videoSlides.length) index = videoSlides.length - 1;
+        
+        // 如果是同一个视频，不做处理
+        if (index === currentSlide) return;
+        
+        // 暂停当前视频
+        pauseVideo(currentSlide);
+        
+        // 更新当前索引
+        const prevSlide = currentSlide;
+        currentSlide = index;
+        
+        // 应用滑动动画
+        videoContainer.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1)';
+        videoContainer.style.transform = `translateY(-${currentSlide * 100}%)`;
+        
+        // 播放新视频并开始进度条
+        setTimeout(() => {
+          playVideo(currentSlide);
+          startProgress(currentSlide);
+        }, 300);
+      }
+      
+      // 触摸事件 - 用于滑动切换视频
+      videoContainer.addEventListener('touchstart', (e) => {
+        startY = e.touches[0].clientY;
+        isDragging = true;
+        
+        // 暂停当前视频
+        pauseVideo(currentSlide);
+      }, { passive: true });
+      
+      videoContainer.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        endY = e.touches[0].clientY;
+      }, { passive: true });
+      
+      videoContainer.addEventListener('touchend', () => {
+        if (!isDragging) return;
+        
+        const diffY = endY - startY;
+        
+        // 判断滑动方向和距离
+        if (diffY < -50) {
+          // 向上滑动 - 下一个视频
+          goToSlide(currentSlide + 1);
+        } else if (diffY > 50) {
+          // 向下滑动 - 上一个视频
+          goToSlide(currentSlide - 1);
+        } else {
+          // 滑动距离不足，恢复播放
+          playVideo(currentSlide);
+        }
+        
+        isDragging = false;
+      });
+      
+      // 点击视频切换播放/暂停
+      videoSlides.forEach((slide, index) => {
+        slide.addEventListener('click', (e) => {
+          // 避免点击按钮时触发
+          if (!e.target.closest('button') && !e.target.closest('i')) {
+            if (videoPlaying[index]) {
+              pauseVideo(index);
+            } else {
+              playVideo(index);
+            }
+          }
+        });
+      });
+      
+      // 个人中心导航
+      profileBtn.addEventListener('click', () => {
+        profileScreen.style.transform = 'translateX(0)';
+        pauseVideo(currentSlide);
+      });
+      
+      backToVideos.addEventListener('click', () => {
+        profileScreen.style.transform = 'translateX(100%)';
+        playVideo(currentSlide);
+      });
+      
+      // 退出登录
+      logoutBtn.addEventListener('click', () => {
+        profileScreen.style.transform = 'translateX(100%)';
+        videoScreen.classList.add('hidden');
+        authScreen.classList.remove('hidden');
+        currentUser = null;
+        localStorage.removeItem('glassTubeCurrentUser');
+        showNotification('已退出', '您已成功退出登录', 'info');
+      });
+      
+      // 发布视频相关
+      document.querySelector('.pulse-slow').addEventListener('click', () => {
+        uploadScreen.classList.remove('hidden');
+        pauseVideo(currentSlide);
+      });
+      
+      cancelUpload.addEventListener('click', () => {
+        uploadScreen.classList.add('hidden');
+        playVideo(currentSlide);
+      });
+      
+      confirmUpload.addEventListener('click', () => {
+        const title = document.getElementById('videoTitle').value.trim();
+        
+        if (!title) {
+          showNotification('错误', '请输入视频标题', 'error');
+          return;
+        }
+        
+        uploadScreen.classList.add('hidden');
+        showNotification('发布成功', '你的视频已成功发布', 'success');
+        playVideo(currentSlide);
+      });
+      
+      // 通知功能
+      function showNotification(title, message, type = 'info') {
+        notifyTitle.textContent = title;
+        notifyMessage.textContent = message;
+        
+        if (type === 'success') {
+          notifyIcon.className = 'w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 mt-0.5 flex-shrink-0';
+          notifyIcon.innerHTML = '<i class="fa fa-check"></i>';
+        } else if (type === 'error') {
+          notifyIcon.className = 'w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 mt-0.5 flex-shrink-0';
+          notifyIcon.innerHTML = '<i class="fa fa-times"></i>';
+        } else {
+          notifyIcon.className = 'w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary mt-0.5 flex-shrink-0';
+          notifyIcon.innerHTML = '<i class="fa fa-info"></i>';
+        }
+        
+        notification.classList.remove('translate-x-full', 'opacity-0');
+        notification.classList.add('translate-x-0', 'opacity-100');
+        
+        const timer = setTimeout(hideNotification, 3000);
+        
+        closeNotify.onclick = function() {
+          clearTimeout(timer);
+          hideNotification();
+        };
+      }
+      
+      function hideNotification() {
+        notification.classList.remove('translate-x-0', 'opacity-100');
+        notification.classList.add('translate-x-full', 'opacity-0');
+      }
+      
+      // 页面加载时检查是否已登录
+      if (currentUser) {
+        authScreen.classList.add('hidden');
+        videoScreen.classList.remove('hidden');
+        profileUsername.textContent = currentUser.username;
+        playVideo(0);
+        startProgress(0);
+      }
+      
+      // 初始化视频容器高度
+      function setVideoContainerHeight() {
+        videoContainer.style.height = `${window.innerHeight}px`;
+        videoSlides.forEach(slide => {
+          slide.style.height = `${window.innerHeight}px`;
+        });
+      }
+      
+      setVideoContainerHeight();
+      window.addEventListener('resize', setVideoContainerHeight);
+    });
+  </script>
+</body>
+</html>
